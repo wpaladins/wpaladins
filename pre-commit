@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+#
+# 将本脚本添加到 仓库根目录/.git/hooks/pre-commit
+# 并赋予执行权限 chmod +x pre-commit
+
+if ! type git-clang-format > /dev/null 2>&1; then
+    echo "git-clang-format 未安装"
+    sudo yum install -y llvm-toolset-7-git-clang-format
+fi
+
+source /opt/rh/llvm-toolset-7/enable
+
+export WORKSPACE=`pwd`
+diff_file=git_clang_format.diff
+git clang-format --diff > $diff_file
+
+diff_file_line_count=$(wc -l < "$diff_file")
+if [ "$diff_file_line_count" -gt 2 ]; then
+    echo "git-clang-format: failed!"
+    cat "${diff_file}"
+    echo "你可以查看 git_clang_format.diff 中的修改是否符合预期，不符合预期则需修改 .clang-format 文件"
+    echo "你可以执行 git-clang-format 修复（执行时不能有未 stage 的修改）"
+    exit 1
+else
+    echo "git-clang-format: success!"
+    exit 0
+fi
